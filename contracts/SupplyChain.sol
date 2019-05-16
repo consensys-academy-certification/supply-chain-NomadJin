@@ -48,12 +48,8 @@ contract SupplyChain {
         _;
     }
     // Create a modifier named 'checkCaller' where only the buyer or the seller (depends on the function) of an Item can proceed with the execution.
-    modifier checkCaller(uint _id, bool flag) {
-        if(flag == true) {
-            require(msg.sender == items[_id].seller);
-        } else {
-            require(msg.sender == items[_id].buyer);
-        }
+    modifier checkCaller(address _caller) {
+        require(msg.sender == _caller);
         _;
     }
     // Create a modifier named 'checkValue' where the execution can only proceed if the caller sent enough Ether to pay for a specific Item or fee.
@@ -114,7 +110,7 @@ contract SupplyChain {
         );
     }
     // Create a function named 'shipItem' that allows the seller of a specific Item to record that it has been shipped.
-    function shipItem(uint _id) checkState(_id, State.Sold) checkCaller(_id, true) public {
+    function shipItem(uint _id) checkState(_id, State.Sold) checkCaller(items[_id].seller) public {
         items[_id].state = State.Shipped;
         emit itemEvent(
             _id,
@@ -126,7 +122,7 @@ contract SupplyChain {
         );
     }
     // Create a function named 'receiveItem' that allows the buyer of a specific Item to record that it has been received.
-    function receiveItem(uint _id) checkState(_id, State.Shipped) checkCaller(_id, false) public {
+    function receiveItem(uint _id) checkState(_id, State.Shipped) checkCaller(items[_id].buyer) public {
         items[_id].state = State.Received;
         emit itemEvent(
             _id,
@@ -146,10 +142,6 @@ contract SupplyChain {
     function withdrawFunds() onlyOwner public {
         require(address(this).balance > 0, 'No funds available.');
         owner.transfer(address(this).balance);
-    }
-    
-    function getCurrentBalance() view public returns(uint) {
-        return address(this).balance;
     }
 
 }
